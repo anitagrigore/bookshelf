@@ -18,7 +18,7 @@ struct list
  *
  * \return Returns NULL on failure or a pointer to a heap-allocated
  * list structure
-*/
+ */
 struct list *list_create();
 
 /**
@@ -30,12 +30,12 @@ struct list *list_create();
  * data is inserted at the end of the list.
  *
  * \return Returns 0 if the insertion was successful or 1 if an error occurred
-*/
+ */
 int32_t list_insert(void *data, struct list_node *after);
 
 /**
  * \brief Destroys a list and all of its nodes
  *
  * \param list The list that has to be distroyed
-*/
+ */
 void list_free(struct list *list);
