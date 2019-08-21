@@ -65,7 +65,8 @@ struct list *list_create();
  * \param list The host list
  * \param data The data to be added to the linked list
  * \param after The node after which the data has to be inserted. If NULL, the
- * data is inserted at the end of the list.
+ * data is prepanded to the list, otherwise the data is inserted after the given
+ * node. For the data to be appended to the list, `list->tail` must be given.
  *
  * \return Returns 0 if the insertion was successful or 1 if an error occurred
  */
