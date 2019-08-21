@@ -1,15 +1,52 @@
+/**
+ * \file
+ * \brief Doubly linked list utility module
+ */
+
+/**
+ * \defgroup linked_list Linked List
+ *
+ * Typical usage of a linked list using this API looks like this:
+ *
+ * \code{.c}
+ * struct list *primes = list_create();
+ * list_insert(primes, (void *)2, NULL);
+ * list_insert(primes, (void *)3, NULL);
+ *
+ * // ...
+ *
+ * list_free(primes);
+ * \endcode
+ *
+ * @{
+ */
+
 #include <stdint.h>
 
+/**
+ * \brief Node of a doubly linked list
+ */
 struct list_node
 {
+  /// The next node in the list.
   struct list_node *next;
+
+  /// The previous node in the list.
   struct list_node *prev;
+
+  /// The data this node holds.
   void *data;
 };
 
+/**
+ * \brief Doubly-linked list
+ */
 struct list
 {
+  /// The first node of the list.
   struct list_node *head;
+
+  /// The last node of the list.
   struct list_node *tail;
 };
 
@@ -35,8 +72,12 @@ struct list *list_create();
 int32_t list_insert(struct list *list, void *data, struct list_node *after);
 
 /**
- * \brief Destroys a list and all of its nodes
+ * \brief Destroys a list and all of its nodes.
+ *
+ * When the nodes in a list are `free`d, their \p data pointer is not freed.
  *
  * \param list The list that has to be distroyed
  */
 void list_free(struct list *list);
+
+/** @} */
