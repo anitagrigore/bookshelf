@@ -25,13 +25,14 @@ struct list *list_create();
  * \brief Inserts a node with the value \p data into a linked list after node
  * \p after
  *
+ * \param list The host list
  * \param data The data to be added to the linked list
  * \param after The node after which the data has to be inserted. If NULL, the
  * data is inserted at the end of the list.
  *
  * \return Returns 0 if the insertion was successful or 1 if an error occurred
  */
-int32_t list_insert(void *data, struct list_node *after);
+int32_t list_insert(struct list *list, void *data, struct list_node *after);
 
 /**
  * \brief Destroys a list and all of its nodes
