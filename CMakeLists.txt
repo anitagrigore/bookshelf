@@ -11,6 +11,7 @@ add_library(cutest SHARED third_party/cutest/CuTest.c third_party/cutest/CuTest.
 
 add_executable(test
   test/main.c
+  test/utils/linked_list_test.c
 )
 
 target_link_libraries(test cutest utils)
