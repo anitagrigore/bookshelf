@@ -30,7 +30,6 @@ int32_t list_insert(struct list *list, void *data, struct list_node *after)
     node->next = list->head;
     list->head->prev = node;
     list->head = node;
-
   }
   else if (after == list->tail)
   {
