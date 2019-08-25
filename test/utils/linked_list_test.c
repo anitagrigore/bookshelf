@@ -24,12 +24,43 @@ void test_list_insert(CuTest *tc)
 
   CuAssertIntEquals(tc, 1, (int32_t)list->head->data);
 
-  list_insert(list, (void *)2, list->tail);
+  list_insert(list, (void *)3, list->tail);
 
-  CuAssertIntEquals(tc, 2, (int32_t)list->tail->data);
+  CuAssertIntEquals(tc, 3, (int32_t)list->tail->data);
 
-  list_insert(list, (void *)3, list->head->next);
-  CuAssertIntEquals(tc, 3, (int32_t)list->head->next->next->data);
+  list_insert(list, (void *)2, list->head);
+  CuAssertIntEquals(tc, 2, (int32_t)list->head->next->data);
+
+  for (int32_t i = 4; i < 100; i++)
+  {
+    list_insert(list, (void *)i, list->tail);
+  }
+
+  struct list_node *curr = list->head;
+  for (int32_t i = 1; i < 100; i++)
+  {
+    if (i > 1)
+    {
+      /*
+       * We are not at the first element, so a "prev" should exist.
+       */
+
+      CuAssertPtrNotNull(tc, curr->prev);
+      CuAssertIntEquals(tc, i - 1, (int32_t)curr->prev->data);
+    }
+
+    if (i < 99)
+    {
+      /*
+       * We are not at the last element, so a "next" should exist.
+       */
+
+      CuAssertPtrNotNull(tc, curr->next);
+      CuAssertIntEquals(tc, i + 1, (int32_t)curr->next->data);
+    }
+
+    curr = curr->next;
+  }
 
   list_free(list);
 }

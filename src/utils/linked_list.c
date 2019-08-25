@@ -1,6 +1,7 @@
 #include "utils/linked_list.h"
 
 #include <stddef.h>
+#include <stdlib.h>
 
 struct list *list_create()
 {
