@@ -65,11 +65,48 @@ void test_list_insert(CuTest *tc)
   list_free(list);
 }
 
+void test_list_delete(CuTest *tc)
+{
+  struct list *list = list_create();
+  list_insert(list, (void *)0, NULL);
+  for (int32_t i = 1; i < 32; i++)
+  {
+    list_insert(list, (void*)i, list->tail);
+  }
+
+  CuAssertPtrNotNull(tc, list->head);
+  CuAssertPtrNotNull(tc, list->tail);
+
+  list_delete(list, list->head);
+  CuAssertIntEquals(tc, 1, (int32_t)list->head->data);
+  CuAssertPtrEquals(tc, NULL, list->head->prev);
+
+  list_delete(list, list->tail);
+  CuAssertIntEquals(tc, 30, (int32_t)list->tail->data);
+  CuAssertPtrEquals(tc, NULL, list->tail->next);
+
+  struct list_node *curr = list->head;
+  while ((int32_t) curr->data != 15)
+  {
+    curr = curr->next;
+  }
+
+  struct list_node *next = curr->next;
+  struct list_node *prev = curr->prev;
+
+  list_delete(list, curr);
+  CuAssertIntEquals(tc, 16, (int32_t)next->data);
+  CuAssertIntEquals(tc, 14, (int32_t)prev->data);
+
+  list_free(list);
+}
+
 CuSuite *make_suite_list()
 {
   CuSuite *suite = CuSuiteNew();
   SUITE_ADD_TEST(suite, test_list_create);
   SUITE_ADD_TEST(suite, test_list_insert);
+  SUITE_ADD_TEST(suite, test_list_delete);
 
   return suite;
 }

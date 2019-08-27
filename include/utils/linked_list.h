@@ -81,4 +81,14 @@ int32_t list_insert(struct list *list, void *data, struct list_node *after);
  */
 void list_free(struct list *list);
 
+/**
+ *\brief Deletes the \p node from \p list
+ *
+ *\param list The list from which the node has to be deleted
+ *\param node The node that has to be deleted
+ *
+ *\return Returns the data contained by the \p node, before deleting it
+ */
+void *list_delete(struct list *list, struct list_node *node);
+
 /** @} */
