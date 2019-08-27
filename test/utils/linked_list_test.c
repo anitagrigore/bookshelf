@@ -68,14 +68,10 @@ void test_list_insert(CuTest *tc)
 void test_list_delete(CuTest *tc)
 {
   struct list *list = list_create();
-  list_insert(list, (void *)0, NULL);
-  for (int32_t i = 1; i < 32; i++)
+  for (int32_t i = 0; i < 32; i++)
   {
-    list_insert(list, (void*)i, list->tail);
+    list_insert(list, (void *)i, list->tail);
   }
-
-  CuAssertPtrNotNull(tc, list->head);
-  CuAssertPtrNotNull(tc, list->tail);
 
   list_delete(list, list->head);
   CuAssertIntEquals(tc, 1, (int32_t)list->head->data);
@@ -86,7 +82,7 @@ void test_list_delete(CuTest *tc)
   CuAssertPtrEquals(tc, NULL, list->tail->next);
 
   struct list_node *curr = list->head;
-  while ((int32_t) curr->data != 15)
+  while ((int32_t)curr->data != 15)
   {
     curr = curr->next;
   }
@@ -97,6 +93,8 @@ void test_list_delete(CuTest *tc)
   list_delete(list, curr);
   CuAssertIntEquals(tc, 16, (int32_t)next->data);
   CuAssertIntEquals(tc, 14, (int32_t)prev->data);
+  CuAssertIntEquals(tc, 16, (int32_t)prev->next->data);
+  CuAssertIntEquals(tc, 14, (int32_t)next->prev->data);
 
   list_free(list);
 }
