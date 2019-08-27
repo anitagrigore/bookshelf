@@ -60,3 +60,33 @@ void list_free(struct list *list)
   free(list->head);
   free(list);
 }
+
+void *list_delete(struct list *list, struct list_node *node)
+{
+  void *data = node->data;
+
+  if (node == list->head)
+  {
+    list->head = node->next;
+    if (list->head != NULL)
+    {
+      list->head->prev = NULL;
+    }
+  }
+  else if (node == list->tail)
+  {
+    list->tail = list->tail->prev;
+    if (list->tail != NULL)
+    {
+      list->tail->next = NULL;
+    }
+  }
+  else
+  {
+    node->prev->next = node->next;
+    node->next->prev = node->prev;
+  }
+
+  free(node);
+  return data;
+}
