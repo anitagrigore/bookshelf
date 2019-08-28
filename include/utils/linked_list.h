@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Doubly linked list utility module

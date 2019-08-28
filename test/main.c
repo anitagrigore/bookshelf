@@ -3,6 +3,7 @@
 #include "cutest/CuTest.h"
 
 CuSuite *make_suite_list();
+CuSuite *make_suite_hashtable();
 
 int main()
 {
@@ -10,6 +11,7 @@ int main()
   CuSuite *all = CuSuiteNew();
 
   CuSuiteAddSuite(all, make_suite_list());
+  CuSuiteAddSuite(all, make_suite_hashtable());
 
   CuSuiteRun(all);
   CuSuiteSummary(all, output);
