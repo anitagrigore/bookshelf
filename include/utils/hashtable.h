@@ -44,9 +44,9 @@ int32_t hashtable_insert(struct hashtable *ht, const char *key, void *value);
  * \param key The key of the element that has to be deleted
  * \param found Whether the entry has actually been found or not. This will be set to 1 if an
  * element with key \p key is found, 0 otherwise
- * \return Returns the deleted entry for further cleanup
+ * \return Returns the value of the deleted entry for further cleanup
  */
-struct hashtable_entry hashtable_delete(struct hashtable *ht, const char *key, int32_t *found);
+void *hashtable_delete(struct hashtable *ht, const char *key, int32_t *found);
 
 /**
  * \brief Look for an element with the given key

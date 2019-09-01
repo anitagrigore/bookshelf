@@ -57,12 +57,17 @@ int32_t hashtable_insert(struct hashtable *ht, const char *key, void *value)
   return list_insert(slot, (void *)entry, slot->tail);
 }
 
-struct hashtable_entry hashtable_delete(struct hashtable *ht, const char *key, int32_t *found)
+void *hashtable_delete(struct hashtable *ht, const char *key, int32_t *found)
 {
+  if (found != NULL)
+  {
+    *found = 0;
+  }
+
   uint32_t slot_idx = murmur_hash((void *)key, strlen(key)) % ht->slots_count;
   struct list *slot = ht->slots[slot_idx];
 
-  struct hashtable_entry entry_backup = {0};
+  void *value = NULL;
 
   struct list_node *node = slot->head;
   for (; node != NULL; node = node->next)
@@ -70,19 +75,22 @@ struct hashtable_entry hashtable_delete(struct hashtable *ht, const char *key, i
     struct hashtable_entry *entry = (struct hashtable_entry *)node->data;
     if (hashtable_key_cmp(entry->key, key) == 0)
     {
-      *found = 1;
+      if (found != NULL)
+      {
+        *found = 1;
+      }
 
-      entry_backup = *entry;
-      list_delete(ht->slots[slot_idx], node);
+      value = entry->value;
+
+      list_delete(slot, node);
+      free(entry->key);
       free(entry);
 
-      return entry_backup;
+      return value;
     }
   }
 
-  *found = 0;
-
-  return entry_backup;
+  return value;
 }
 
 void *hashtable_lookup(struct hashtable *ht, const char *key, int32_t *found)
