@@ -10,7 +10,7 @@ void test_list_create(CuTest *tc)
   CuAssertPtrEquals(tc, NULL, list->head);
   CuAssertPtrEquals(tc, NULL, list->tail);
 
-  list_free(list);
+  list_free(list, NULL);
 }
 
 void test_list_insert(CuTest *tc)
@@ -62,7 +62,7 @@ void test_list_insert(CuTest *tc)
     curr = curr->next;
   }
 
-  list_free(list);
+  list_free(list, NULL);
 }
 
 void test_list_delete(CuTest *tc)
@@ -96,7 +96,33 @@ void test_list_delete(CuTest *tc)
   CuAssertIntEquals(tc, 16, (int32_t)prev->next->data);
   CuAssertIntEquals(tc, 14, (int32_t)next->prev->data);
 
-  list_free(list);
+  list_free(list, NULL);
+}
+
+int32_t free_handler_calls = 0;
+void test_list_free_free_handler(void *unused)
+{
+  free_handler_calls++;
+}
+
+void test_list_free(CuTest *tc)
+{
+  struct list *list = list_create();
+
+  int32_t i;
+  for (i = 0; i < 100; i++)
+  {
+    list_insert(list, (void *)1, NULL);
+  }
+
+  CuAssertIntEquals(tc, 0, free_handler_calls);
+
+  /*
+   * Check that, if passed, the callback is called exactly 100 times (which is the number of
+   * elements in the list).
+   */
+  list_free(list, test_list_free_free_handler);
+  CuAssertIntEquals(tc, 100, free_handler_calls);
 }
 
 CuSuite *make_suite_list()
@@ -105,6 +131,7 @@ CuSuite *make_suite_list()
   SUITE_ADD_TEST(suite, test_list_create);
   SUITE_ADD_TEST(suite, test_list_insert);
   SUITE_ADD_TEST(suite, test_list_delete);
+  SUITE_ADD_TEST(suite, test_list_free);
 
   return suite;
 }
