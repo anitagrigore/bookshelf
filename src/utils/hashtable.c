@@ -19,42 +19,53 @@ struct hashtable *hashtable_create(size_t slots_count)
     return NULL;
   }
 
-  for (int32_t i = 0; i < slots_count; i++)
+  int32_t i;
+  for (i = 0; i < slots_count; i++)
   {
     ht->slots[i] = list_create();
+
+    if (!ht->slots[i])
+    {
+      return NULL;
+    }
   }
 
   return ht;
 }
 
-int32_t hashtable_insert(struct hashtable *ht, struct hashtable_key key, void *value)
+int32_t hashtable_insert(struct hashtable *ht, const char *key, void *value)
 {
-  uint32_t index = murmur_hash(key.key, key.size) % ht->slots_count;
+  uint32_t slot_idx = murmur_hash((void *)key, strlen(key)) % ht->slots_count;
+  struct list *slot = ht->slots[slot_idx];
+
   struct hashtable_entry *entry = malloc(sizeof(struct hashtable_entry));
   if (entry == NULL)
   {
     return 1;
   }
 
-  entry->key = key;
-  entry->value = value;
-
-  if (list_insert(ht->slots[index], entry, ht->slots[index]->tail) != 0)
+  entry->key = malloc(strlen(key) + 1);
+  if (!entry->key)
   {
     return 1;
   }
 
-  return 0;
+  strcpy(entry->key, key);
+
+  entry->value = value;
+
+  return list_insert(slot, (void *)entry, slot->tail);
 }
 
-struct hashtable_entry hashtable_delete(struct hashtable *ht, ht_key_t key, int32_t *found)
+struct hashtable_entry hashtable_delete(struct hashtable *ht, const char *key, int32_t *found)
 {
-  uint32_t slot_idx = murmur_hash(key.key, key.size) % ht->slots_count;
+  uint32_t slot_idx = murmur_hash((void *)key, strlen(key)) % ht->slots_count;
+  struct list *slot = ht->slots[slot_idx];
 
   struct hashtable_entry entry_backup = {0};
 
-  struct list_node *node;
-  for (node = ht->slots[slot_idx]->head; node != NULL; node = node->next)
+  struct list_node *node = slot->head;
+  for (; node != NULL; node = node->next)
   {
     struct hashtable_entry *entry = (struct hashtable_entry *)node->data;
     if (hashtable_key_cmp(entry->key, key) == 0)
@@ -74,16 +85,28 @@ struct hashtable_entry hashtable_delete(struct hashtable *ht, ht_key_t key, int3
   return entry_backup;
 }
 
-void *hashtable_lookup(struct hashtable *ht, struct hashtable_key key)
+void *hashtable_lookup(struct hashtable *ht, const char *key, int32_t *found)
 {
-  uint32_t slot_idx = murmur_hash(key.key, key.size) % ht->slots_count;
+  if (found != NULL)
+  {
+    *found = 0;
+  }
 
-  struct list_node *node;
-  for (node = ht->slots[slot_idx]->head; node != NULL; node = node->next)
+  uint32_t slot_idx = murmur_hash((void *)key, strlen(key)) % ht->slots_count;
+  struct list *slot = ht->slots[slot_idx];
+
+  struct list_node *node = slot->head;
+  for (; node != NULL; node = node->next)
   {
     struct hashtable_entry *entry = (struct hashtable_entry *)node->data;
-    if (hashtable_key_cmp(entry->key, key) == 0)
+
+    if (strcmp(entry->key, key) == 0)
     {
+      if (found != NULL)
+      {
+        *found = 1;
+      }
+
       return entry->value;
     }
   }

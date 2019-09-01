@@ -1,8 +1,8 @@
 #include <stddef.h>
+#include <stdio.h>
 
 #include "cutest/CuTest.h"
 #include "utils/hashtable.h"
-
 
 void test_hashtable_create(CuTest *tc)
 {
@@ -21,7 +21,22 @@ void test_hashtable_insert(CuTest *tc)
   int32_t i;
   for (i = 0; i < 100; i++)
   {
-    hashtable_insert(ht, HT_KEY_INT32(i), (void *)i);
+    char key_buf[8] = {0};
+    snprintf(key_buf, sizeof(key_buf), "%d", i);
+
+    hashtable_insert(ht, key_buf, (void *)i);
+  }
+
+  for (i = 0; i < 100; i++)
+  {
+    char key_buf[8] = {0};
+    snprintf(key_buf, sizeof(key_buf), "%d", i);
+
+    int32_t found;
+    void *val = hashtable_lookup(ht, key_buf, &found);
+
+    CuAssertTrue(tc, found);
+    CuAssertIntEquals(tc, i, (int32_t)val);
   }
 }
 
