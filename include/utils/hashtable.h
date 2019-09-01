@@ -12,20 +12,11 @@ struct hashtable
   struct list **slots;
 };
 
-typedef struct hashtable_key
-{
-  void *key;
-  size_t size;
-} ht_key_t;
-
 struct hashtable_entry
 {
   void *value;
-  struct hashtable_key key;
+  char *key;
 };
-
-#define HT_KEY_STR(k) ((ht_key_t){(void *)k, strlen(k)})
-#define HT_KEY_INT32(k) ((ht_key_t){(void *)k, sizeof(int32_t)})
 
 /**
  * \brief Create a hashtable with \p slots_count slots
@@ -44,7 +35,7 @@ struct hashtable *hashtable_create(size_t entries_count);
  *
  * \return Returns 1 in case of error, and 0 if the inserion was successful
  */
-int32_t hashtable_insert(struct hashtable *ht, struct hashtable_key key, void *value);
+int32_t hashtable_insert(struct hashtable *ht, const char *key, void *value);
 
 /**
  * \brief Deletes the element with the \p key given
@@ -55,15 +46,18 @@ int32_t hashtable_insert(struct hashtable *ht, struct hashtable_key key, void *v
  * element with key \p key is found, 0 otherwise
  * \return Returns the deleted entry for further cleanup
  */
-struct hashtable_entry hashtable_delete(struct hashtable *ht, ht_key_t key, int32_t *found);
+struct hashtable_entry hashtable_delete(struct hashtable *ht, const char *key, int32_t *found);
 
 /**
  * \brief Look for an element with the given key
  *
+ * \param ht The hash table to be searched in
  * \param key The key of the element that is searched
+ * \param found A pointer to a flag marking whether the \p key has actually been found in the hash
+ * table or not. If \p NULL is passed, this value will simply be ignored.
  * \return Returns the value of the element
  */
-void *hashtable_lookup(struct hashtable *ht, struct hashtable_key key);
+void *hashtable_lookup(struct hashtable *ht, const char *key, int32_t *found);
 
 /**
  * \brief Destroys the hashtable and all of its entries
