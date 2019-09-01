@@ -51,25 +51,20 @@ int32_t list_insert(struct list *list, void *data, struct list_node *after)
 
 void list_free(struct list *list, free_handler_t free_node)
 {
-  while (list->head != list->tail)
+  struct list_node *node = list->head;
+  while (node->next != NULL)
   {
-    struct list_node *temp = list->head->next;
-
+    struct list_node *temp = node->next;
     if (free_node)
     {
-      free_node(list->head->data);
+      free_node(node->data);
     }
 
-    free(list->head);
-    list->head = temp;
+    free(node);
+
+    node = temp;
   }
 
-  if (free_node)
-  {
-    free_node(list->head->data);
-  }
-
-  free(list->head);
   free(list);
 }
 
