@@ -25,6 +25,8 @@
 
 #include <stdint.h>
 
+#include "utils/free_handler.h"
+
 /**
  * \brief Node of a doubly linked list
  */
@@ -80,8 +82,10 @@ int32_t list_insert(struct list *list, void *data, struct list_node *after);
  * When the nodes in a list are `free`d, their \p data pointer is not freed.
  *
  * \param list The list that has to be distroyed
+ * \param free_fn A callback to be invoked for every element if further cleanup is needed. If
+ * \p NULL is given, nu per-element-cleanup is performed.
  */
-void list_free(struct list *list);
+void list_free(struct list *list, free_handler_t free_fn);
 
 /**
  *\brief Deletes the \p node from \p list

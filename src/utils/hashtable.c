@@ -121,3 +121,17 @@ void *hashtable_lookup(struct hashtable *ht, const char *key, int32_t *found)
 
   return NULL;
 }
+
+void hashtable_free(struct hashtable *ht, free_handler_t free_entry)
+{
+  int32_t slot_idx;
+  for (slot_idx = 0; slot_idx < ht->slots_count; slot_idx++)
+  {
+    struct list *slot = ht->slots[slot_idx];
+
+    list_free(slot, free_entry);
+  }
+
+  free(ht->slots);
+  free(ht);
+}

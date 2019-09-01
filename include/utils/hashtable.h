@@ -63,5 +63,7 @@ void *hashtable_lookup(struct hashtable *ht, const char *key, int32_t *found);
  * \brief Destroys the hashtable and all of its entries
  *
  * \param ht A pointer to the hashtable that has to be distroyed
+ * \param free_entry Callback to be called for every entry being cleared from the hash table for
+ * further cleanup. If \p NULL is given, this function is ignored.
  */
-void hashtable_free(struct hashtable *ht);
+void hashtable_free(struct hashtable *ht, free_handler_t free_entry);
