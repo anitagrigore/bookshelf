@@ -3,6 +3,8 @@
 #include "cutest/CuTest.h"
 #include "utils/linked_list.h"
 
+#include <stdio.h>
+
 void test_list_create(CuTest *tc)
 {
   struct list *list = list_create();
@@ -60,6 +62,54 @@ void test_list_insert(CuTest *tc)
     }
 
     curr = curr->next;
+  }
+
+  list_free(list, NULL);
+}
+
+void test_list_insert_front(CuTest *tc)
+{
+  struct list *list = list_create();
+
+  list_insert(list, (void *)1, NULL);
+  CuAssertPtrEquals(tc, list->head, list->tail);
+  CuAssertIntEquals(tc, 1, (int32_t)list->head->data);
+
+  list_insert(list, (void *)2, NULL);
+  CuAssertPtrEquals(tc, list->head, list->tail->prev);
+  CuAssertPtrEquals(tc, list->tail, list->head->next);
+  CuAssertIntEquals(tc, 1, (int32_t)list->tail->data);
+  CuAssertIntEquals(tc, 2, (int32_t)list->head->data);
+
+  list_insert(list, (void *)3, NULL);
+  const struct list_node *mid = list->head->next;
+  CuAssertPtrNotNull(tc, mid);
+  CuAssertPtrEquals(tc, mid, list->tail->prev);
+  CuAssertPtrEquals(tc, list->tail, mid->next);
+  CuAssertPtrEquals(tc, list->head, mid->prev);
+  CuAssertIntEquals(tc, (int32_t)list->head->data, 3);
+  CuAssertIntEquals(tc, (int32_t)mid->data, 2);
+  CuAssertIntEquals(tc, (int32_t)list->tail->data, 1);
+
+  int32_t i;
+  for (i = 4; i <= 100; i++)
+  {
+    list_insert(list, (void *)i, NULL);
+  }
+
+  struct list_node *curr = list->head;
+  for (i = 100; i >= 1 && curr; i--, curr = curr->next)
+  {
+    CuAssertIntEquals(tc, i, (int32_t)curr->data);
+
+    if (curr != list->head)
+    {
+      CuAssertIntEquals(tc, i + 1, (int32_t)curr->prev->data);
+    }
+    if (curr != list->tail)
+    {
+      CuAssertIntEquals(tc, i - 1, (int32_t)curr->next->data);
+    }
   }
 
   list_free(list, NULL);
@@ -130,6 +180,7 @@ CuSuite *make_suite_list()
   CuSuite *suite = CuSuiteNew();
   SUITE_ADD_TEST(suite, test_list_create);
   SUITE_ADD_TEST(suite, test_list_insert);
+  SUITE_ADD_TEST(suite, test_list_insert_front);
   SUITE_ADD_TEST(suite, test_list_delete);
   SUITE_ADD_TEST(suite, test_list_free);
 

@@ -26,7 +26,7 @@ int32_t list_insert(struct list *list, void *data, struct list_node *after)
     list->head = node;
     list->tail = node;
   }
-  if (after == NULL)
+  else if (after == NULL)
   {
     node->next = list->head;
     list->head->prev = node;
@@ -52,9 +52,10 @@ int32_t list_insert(struct list *list, void *data, struct list_node *after)
 void list_free(struct list *list, free_handler_t free_node)
 {
   struct list_node *node = list->head;
-  while (node->next != NULL)
+  while (node)
   {
     struct list_node *temp = node->next;
+
     if (free_node)
     {
       free_node(node->data);
