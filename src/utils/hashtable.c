@@ -128,8 +128,24 @@ void hashtable_free(struct hashtable *ht, free_handler_t free_entry)
   for (slot_idx = 0; slot_idx < ht->slots_count; slot_idx++)
   {
     struct list *slot = ht->slots[slot_idx];
+    struct list_node *node = slot->head;
+    while (node)
+    {
+      struct hashtable_entry *entry = (struct hashtable_entry *)node->data;
+      void *value = entry->value;
 
-    list_free(slot, free_entry);
+      free(entry->key);
+      free(entry);
+
+      if (free_entry)
+      {
+        free_entry(value);
+      }
+
+      node = node->next;
+    }
+
+    list_free(slot, NULL);
   }
 
   free(ht->slots);
