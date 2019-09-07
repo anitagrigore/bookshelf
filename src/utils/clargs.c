@@ -108,41 +108,31 @@ int64_t clargs_parse_long(const char *value, void *extra, char *error)
 int32_t clargs_parse_bool(const char *value, void *extra, char *error)
 {
   error = NULL;
-  char *allowed = {'1', '0', 't', 'f', 'y', 'n'};
+  char *allowed_true = {'1', 't', 'y', 'true', 'yes', 'TRUE', 'YES', NULL};
+  char *allowed_false ={'0', 'f', 'n', 'false', 'no', 'FALSE', 'NO', NULL};
 
-  if (strlen(value) == 0)
+  int32_t i = 0;
+  while (allowed_true != NULL)
   {
-    return 1;
-  }
-
-  if (strlen(value) == 1)
-  {
-    int32_t i, found = 0;
-    for (i = 0; i < 6; i++)
+    if (strcmp(value, allowed_true[i]) == 0)
     {
-      if (value[0] == allowed[i])
-      {
-        found = 1;
-        return 1;
-      }
+      return 1;
     }
-
-    if (found == 0)
-    {
-      strcpy(error, "failed to parse bool");
-      return 0;
-    }
-
-    return 1;
+    i++;
   }
 
-  if (!strcmp(value, "true") && !strcmp(value, "false") && !strcmp(value, "yes") && !strcmp(value, "no"))
+  int32_t i = 0;
+  while (allowed_false != NULL)
   {
-    strcpy(error, "failed to parse bool");
-    return 0;
+    if (strcmp(value, allowed_false[i]) == 0)
+    {
+      return 1;
+    }
+    i++;
   }
 
-  return 1;
+  strcpy(error, "failed to parse bool");  
+  return 0;
 }
 
 char *clargs_parse_string(const char *value, void *extra, char *error)
