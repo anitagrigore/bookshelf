@@ -3,6 +3,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <strings.h>  // POSIX strcasecmp
 
 struct clargs_parser *clargs_create_parser(int32_t argc, char **argv)
 {
@@ -108,30 +109,41 @@ int64_t clargs_parse_long(const char *value, void *extra, char *error)
 int32_t clargs_parse_bool(const char *value, void *extra, char *error)
 {
   error = NULL;
-  char *allowed_true = {'1', 't', 'y', 'true', 'yes', 'TRUE', 'YES', NULL};
-  char *allowed_false ={'0', 'f', 'n', 'false', 'no', 'FALSE', 'NO', NULL};
+
+  if (strlen(value) == 0)
+  {
+    /*
+     * Flags can be passed as --use_logs without any value so we take a TRUE out of this.
+     */
+    return 1;
+  }
+
+  const char *allowed_true[] = {"1", "t", "y", "true", "yes", NULL};
+  const char *allowed_false[] = {"0", "f", "n", "false", "no", NULL};
 
   int32_t i = 0;
-  while (allowed_true != NULL)
+  while (allowed_true[i] != NULL)
   {
-    if (strcmp(value, allowed_true[i]) == 0)
+    if (strcasecmp(value, allowed_true[i]) == 0)
     {
       return 1;
     }
+
     i++;
   }
 
-  int32_t i = 0;
-  while (allowed_false != NULL)
+  i = 0;
+  while (allowed_false[i] != NULL)
   {
-    if (strcmp(value, allowed_false[i]) == 0)
+    if (strcasecmp(value, allowed_false[i]) == 0)
     {
-      return 1;
+      return 0;
     }
+
     i++;
   }
 
-  strcpy(error, "failed to parse bool");  
+  strcpy(error, "failed to parse bool");
   return 0;
 }
 
