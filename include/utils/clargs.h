@@ -77,10 +77,10 @@ int32_t clargs_parse(struct clargs_parser *p, char *cl_error);
  */
 void clargs_free_parser(struct clargs_parser *p);
 
-int32_t clargs_parse_int(const char *value, void *extra, char *error);
+int32_t clargs_parse_int(const char *value, void *extra, int32_t *has_error, char *error);
 
-int32_t clargs_parse_bool(const char *value, void *extra, char *error);
+int32_t clargs_parse_bool(const char *value, void *extra, int32_t *has_error, char *error);
 
-int64_t clargs_parse_long(const char *value, void *extra, char *error);
+int64_t clargs_parse_long(const char *value, void *extra, int32_t *has_error, char *error);
 
-char *clargs_parse_string(const char *value, void *extra, char *error);
+char *clargs_parse_string(const char *value, void *extra, int32_t *has_error, char *error);

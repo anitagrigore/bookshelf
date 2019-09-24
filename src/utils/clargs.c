@@ -36,24 +36,27 @@ void clargs_add_argument(
   return hashtable_insert(p->defs, name, arg);
 }
 
-int32_t clargs_parse_int(const char *value, void *extra, char *error)
+int32_t clargs_parse_int(const char *value, void *extra, int32_t *has_error, char *error)
 {
-  error = NULL;
+  *has_error = 0;
 
   if (strlen(value) == 0)
   {
+    *has_error = 1;
     strcpy(error, "failed to parse integer");
     return 0;
   }
 
   if (strlen(value) == 1 && (value[0] == '+' || value[0] == '-'))
   {
+    *has_error = 1;
     strcpy(error, "failed to parse integer");
     return 0;
   }
 
   if (value[0] != '+' && value[0] != '-' && !isdigit(value[0]))
   {
+    *has_error = 1;
     strcpy(error, "failed to parse integer");
     return 0;
   }
@@ -63,6 +66,7 @@ int32_t clargs_parse_int(const char *value, void *extra, char *error)
   {
     if (!isdigit(value[i]))
     {
+      *has_error = 1;
       strcpy(error, "failed to parse integer");
       return 0;
     }
@@ -71,24 +75,27 @@ int32_t clargs_parse_int(const char *value, void *extra, char *error)
   return atoi(value);
 }
 
-int64_t clargs_parse_long(const char *value, void *extra, char *error)
+int64_t clargs_parse_long(const char *value, void *extra, int32_t *has_error, char *error)
 {
-  error = NULL;
+  *has_error = 0;
 
   if (strlen(value) == 0)
   {
+    *has_error = 1;
     strcpy(error, "failed to parse long integer");
     return 0;
   }
 
   if (strlen(value) == 1 && (value[0] == '+' || value[0] == '-'))
   {
+    *has_error = 1;
     strcpy(error, "failed to parse long integer");
     return 0;
   }
 
   if (value[0] != '+' && value[0] != '-' && !isdigit(value[0]))
   {
+    *has_error = 1;
     strcpy(error, "failed to parse long integer");
     return 0;
   }
@@ -98,6 +105,7 @@ int64_t clargs_parse_long(const char *value, void *extra, char *error)
   {
     if (!isdigit(value[i]))
     {
+      *has_error = 1;
       strcpy(error, "failed to parse long integer");
       return 0;
     }
@@ -106,9 +114,9 @@ int64_t clargs_parse_long(const char *value, void *extra, char *error)
   return atoll(value);
 }
 
-int32_t clargs_parse_bool(const char *value, void *extra, char *error)
+int32_t clargs_parse_bool(const char *value, void *extra, int32_t *has_error, char *error)
 {
-  error = NULL;
+  *has_error = 0;
 
   if (strlen(value) == 0)
   {
@@ -143,19 +151,93 @@ int32_t clargs_parse_bool(const char *value, void *extra, char *error)
     i++;
   }
 
+  *has_error = 1;
   strcpy(error, "failed to parse bool");
   return 0;
 }
 
-char *clargs_parse_string(const char *value, void *extra, char *error)
+char *clargs_parse_string(const char *value, void *extra, int32_t *has_error, char *error)
 {
-  error = NULL;
+  *has_error = 0;
 
   if (strlen(value) > (int32_t)extra)
   {
+    *has_error = 1;
     strcpy(error, "failed to parse string");
-    return 0;
+    return NULL;
   }
 
   return value;
+}
+
+int32_t clargs_parse(struct clargs_parser *p, char *cl_error)
+{
+  int i;
+  for (i = 0; i < p->argc; i++)
+  {
+    if (strstr(p->argv[i], "--") == p->argv[i])
+    {
+      char *arg_name = argv[i] + 2;  // 2 is the length of the prefix "--"
+      struct clargs_arg *arg = (struct clargs_arg *)hashtable_lookup(p->defs, arg_name);
+      if (arg == NULL)
+      {
+        snprintf(cl_error, 100, "unknown argument: %s", arg_name]);
+        return 1;
+      }
+      else
+      {
+        char error[64] = {0};
+        int32_t has_error = 0;
+
+        if (arg->type != CLARGS_TYPE_BOOL && (i == argc - 1 ||
+          strstr(p->argv[i + 1], "--") == p->argv[i + 1]))
+        {
+          snprintf(cl_error, 100, "missing values for srgument %s", arg_name);
+          return 1;
+        }
+
+        switch (arg->type)
+        {
+        case CLARGS_TYPE_INT:
+          *arg->value_ptr = clargs_parse_int(p->argv[i + 1], arg->extra, &has_error, error);
+          break;
+        case CLARGS_TYPE_LONG:
+          *arg->value_ptr = clargs_parse_long(p->argv[i + 1], arg->extra, &has_error, error);
+          break;
+        case CLARGS_TYPE_STRING:
+          {
+            char *value = clargs_parse_string(p->argv[i + 1], arg->extra, &has_error, error);
+            if (!*has_error)
+            {
+              strcpy(arg->value_ptr, value);
+            }
+            break;
+          }
+        case CLARGS_TYPE_BOOL:
+          {
+            char value[66] = {0};
+            if (!p->argv[i + 1] || strstr(p->argv[i + 1], "--") == p->argv[i + 1])
+            {
+              strcpy(value, "");
+            }
+            else {
+              snprintf(value, sizeof(value), "%s", p->argv[i + 1]);
+            }
+
+            *arg->value_ptr = clargs_parse_long(value, arg->extra, &has_error, error);
+            break;
+          }
+        default:
+          snprintf(cl_error, 100, "unknown argument type: %d", arg->type);
+          return 1;
+        }
+
+        if (has_error)
+        {
+          snprintf(cl_error, 100, "%s: %s", arg_name, error);
+          return 1;
+        }
+      }
+    }
+  }
 }
