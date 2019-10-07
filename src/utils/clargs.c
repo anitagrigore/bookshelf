@@ -2,21 +2,21 @@
 #include "utils/hashtable.h"
 
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>  // POSIX strcasecmp
 
-struct clargs_parser *clargs_create_parser(int32_t argc, char **argv)
+struct clargs_parser *clargs_create_parser()
 {
-  struct clargs_parse *p = calloc(1, sizeof(struct clargs_parse));
-  p->argc = argc;
-  p->argv = argv;
+  struct clargs_parser *p = calloc(1, sizeof(struct clargs_parser));
 
   p->defs = hashtable_create(32);
 
   return p;
 }
 
-void clargs_add_argument(
+int32_t clargs_add_argument(
   struct clargs_parser *p,
   char *name,
   char *description,
@@ -26,8 +26,10 @@ void clargs_add_argument(
   void *value_ptr
 ) {
   struct clargs_arg *arg = calloc(1, sizeof(struct clargs_arg));
-  arg->name = name;
-  arg->description = description;
+
+  strncpy(arg->name, name, sizeof(arg->name));
+  strncpy(arg->description, description, sizeof(arg->description));
+
   arg->type = type;
   arg->required = required;
   arg->extra = extra;
@@ -156,7 +158,7 @@ int32_t clargs_parse_bool(const char *value, void *extra, int32_t *has_error, ch
   return 0;
 }
 
-char *clargs_parse_string(const char *value, void *extra, int32_t *has_error, char *error)
+char *clargs_parse_string(char *value, void *extra, int32_t *has_error, char *error)
 {
   *has_error = 0;
 
@@ -170,18 +172,19 @@ char *clargs_parse_string(const char *value, void *extra, int32_t *has_error, ch
   return value;
 }
 
-int32_t clargs_parse(struct clargs_parser *p, char *cl_error)
+int32_t clargs_parse(struct clargs_parser *p, int32_t argc, char **argv, char *cl_error)
 {
   int i;
-  for (i = 0; i < p->argc; i++)
+  for (i = 0; i < argc; i++)
   {
-    if (strstr(p->argv[i], "--") == p->argv[i])
+    if (strstr(argv[i], "--") == argv[i])
     {
       char *arg_name = argv[i] + 2;  // 2 is the length of the prefix "--"
-      struct clargs_arg *arg = (struct clargs_arg *)hashtable_lookup(p->defs, arg_name);
-      if (arg == NULL)
+      int32_t arg_found = 0;
+      struct clargs_arg *arg = (struct clargs_arg *)hashtable_lookup(p->defs, arg_name, &arg_found);
+      if (!arg_found)
       {
-        snprintf(cl_error, 100, "unknown argument: %s", arg_name]);
+        snprintf(cl_error, 100, "unknown argument: %s", arg_name);
         return 1;
       }
       else
@@ -190,41 +193,43 @@ int32_t clargs_parse(struct clargs_parser *p, char *cl_error)
         int32_t has_error = 0;
 
         if (arg->type != CLARGS_TYPE_BOOL && (i == argc - 1 ||
-          strstr(p->argv[i + 1], "--") == p->argv[i + 1]))
+          strstr(argv[i + 1], "--") == argv[i + 1]))
         {
           snprintf(cl_error, 100, "missing values for srgument %s", arg_name);
           return 1;
         }
 
+        char *v = argv[i + 1];
+
         switch (arg->type)
         {
         case CLARGS_TYPE_INT:
-          *arg->value_ptr = clargs_parse_int(p->argv[i + 1], arg->extra, &has_error, error);
+          *((int32_t *)arg->value_ptr) = clargs_parse_int(v, arg->extra, &has_error, error);
           break;
         case CLARGS_TYPE_LONG:
-          *arg->value_ptr = clargs_parse_long(p->argv[i + 1], arg->extra, &has_error, error);
+          *((int64_t *)arg->value_ptr) = clargs_parse_long(v, arg->extra, &has_error, error);
           break;
         case CLARGS_TYPE_STRING:
           {
-            char *value = clargs_parse_string(p->argv[i + 1], arg->extra, &has_error, error);
-            if (!*has_error)
+            char *value = clargs_parse_string(v, arg->extra, &has_error, error);
+            if (!has_error)
             {
-              strcpy(arg->value_ptr, value);
+              strcpy((char *)arg->value_ptr, value);  // TODO Check for possible buffer overflow.
             }
             break;
           }
         case CLARGS_TYPE_BOOL:
           {
             char value[66] = {0};
-            if (!p->argv[i + 1] || strstr(p->argv[i + 1], "--") == p->argv[i + 1])
+            if (!v || strstr(v, "--") == v)
             {
               strcpy(value, "");
             }
             else {
-              snprintf(value, sizeof(value), "%s", p->argv[i + 1]);
+              snprintf(value, sizeof(value), "%s", argv[i + 1]);
             }
 
-            *arg->value_ptr = clargs_parse_long(value, arg->extra, &has_error, error);
+            *((int32_t *)arg->value_ptr) = clargs_parse_long(value, arg->extra, &has_error, error);
             break;
           }
         default:
