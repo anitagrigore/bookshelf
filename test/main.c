@@ -5,6 +5,7 @@
 
 CuSuite *make_suite_list();
 CuSuite *make_suite_hashtable();
+CuSuite *make_suite_clargs();
 
 int main()
 {
@@ -14,6 +15,7 @@ int main()
   CuSuite *suites[] = {
     make_suite_list(),
     make_suite_hashtable(),
+    make_suite_clargs(),
   };
 
   const int32_t suites_count = sizeof(suites) / sizeof(CuSuite *);
