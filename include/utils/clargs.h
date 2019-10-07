@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdin.h>
+#include <stdint.h>
 
 #include "utils/hashtable.h"
 
@@ -24,20 +24,15 @@ struct clargs_arg
 
 struct clargs_parser
 {
-  int32_t argc;
-  char **argv;
   struct hashtable *defs;
 };
 
 /**
  * \brief Creates a parser with the arguments given by \p argv
  *
- * \param argc The number of the arguments given; should be the \p argc as received by the main
- * function of the program
- * \param argv Array of command line arguments as received by the main function of the prigram
  * \return Returns an instance of a command line parser (that needs to be freed)
  */
-struct clargs_parser *clargs_create_parser(int32_t argc, char **argv);
+struct clargs_parser *clargs_create_parser();
 
 /**
  * \brief Adds an argument to a parser given as parameter \p p
@@ -49,8 +44,9 @@ struct clargs_parser *clargs_create_parser(int32_t argc, char **argv);
  * \param required A bool variable to know if the argument is required or not
  * \param extra An extra argument for the type provided in \p type
  * \param value_ptr A pointer to a variable where the value of the argument is to be filled
+ * \return Returns 0 on success, non-zero otherwise.
  */
-void clargs_add_argument(
+int32_t clargs_add_argument(
   struct clargs_parser *p,
   char *name,
   char *description,
@@ -61,14 +57,15 @@ void clargs_add_argument(
 );
 
 /**
- * \brief
+ * \brief Based on the definitions supplied to the parser, the function validates the given
+ * arguments and processes them
  *
  * \param p
  * \ cl_error An error description useful in debugging
  * \return Returns 0 if the action was successful, or 1 in case of error. If the return value is 1,
  * an error description will be given by \p cl_error argument.
  */
-int32_t clargs_parse(struct clargs_parser *p, char *cl_error);
+int32_t clargs_parse(struct clargs_parser *p, int32_t argc, char **argv, char *cl_error);
 
 /**
  * \brief Frees the memory used by the \p p parser
@@ -83,4 +80,4 @@ int32_t clargs_parse_bool(const char *value, void *extra, int32_t *has_error, ch
 
 int64_t clargs_parse_long(const char *value, void *extra, int32_t *has_error, char *error);
 
-char *clargs_parse_string(const char *value, void *extra, int32_t *has_error, char *error);
+char *clargs_parse_string(char *value, void *extra, int32_t *has_error, char *error);
