@@ -173,7 +173,7 @@ char *clargs_parse_string(char *value, void *extra, int32_t *has_error, char *er
 
 int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, char *cl_error)
 {
-  int i;
+  size_t i;
   for (i = 0; i < argc; i++)
   {
     if (strstr(argv[i], "--") == argv[i])
@@ -227,7 +227,7 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
            * Anything longer than 16 bytes will get truncated and is, for sure, junk.
            */
           char value[16] = {0};
-          if (strstr(v, "--") == v)
+          if (i == argc - 1 || strstr(v, "--") == v)
           {
             strcpy(value, "");
           }
@@ -251,4 +251,6 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
       }
     }
   }
+
+  return 0;
 }

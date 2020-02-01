@@ -24,7 +24,7 @@ struct hashtable_entry
  * \param slots_count The number of slots
  * \return Returns a pointer to a dynamically allocated hashtable
  */
-struct hashtable *hashtable_create(size_t entries_count);
+struct hashtable *hashtable_create(size_t slots_count);
 
 /**
  * \brief Insert a new element in the \p ht hashtable

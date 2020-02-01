@@ -4,6 +4,16 @@
 #include "cutest/CuTest.h"
 #include "utils/clargs.h"
 
+struct __fixture_parse
+{
+  int32_t argc;
+  const char *argv[8];
+  int32_t has_error;
+  char expected_name[8];
+  int32_t expected_score;
+  int32_t expected_flag;
+};
+
 void test_clargs_parse(CuTest *tc)
 {
   struct clargs_parser *p = clargs_create_parser();
@@ -19,14 +29,41 @@ void test_clargs_parse(CuTest *tc)
   char error[CLARGS_ERROR_SIZE] = {0};
   char failed = 0;
 
-  const char *valid[] = {"--name", "foo", "--score", "32", "--flag", NULL};
-  int32_t valid_argc = 5;
+  const struct __fixture_parse test_cases[] = {
+    {5, {"--name", "foo", "--score", "32", "--flag", NULL}, 0, "foo", 32, 1},
+    {6, {"--name", "foo", "--score", "16", "--flag", "n", NULL}, 0, "foo", 16, 0},
+    {4, {"--score", "16", "--flag", "n", NULL}, 0, "", 16, 0},
+    {4, {"--flag", "1", "--score", "16", NULL}, 0, "", 16, 1},
+    {4, {"--flag", "1", "--score", "x", NULL}, 1, "", 0, 0},
+    {3, {"--flag", "1", "--score", NULL}, 1, "", 0, 0},
+    {2, {"--score", "16", NULL}, 1, "", 16, 0},
+  };
 
-  failed = clargs_parse(p, valid_argc, valid, error);
-  CuAssertIntEquals(tc, 0, failed);
-  CuAssertStrEquals(tc, "foo", arg_name);
-  CuAssertIntEquals(tc, 32, arg_score);
-  CuAssertIntEquals(tc, 1, arg_flag);
+  size_t fixtures_count = sizeof(test_cases) / sizeof(struct __fixture_parse);
+  char trace_msg[32] = {0};
+
+  size_t i;
+  for (i = 0; i < fixtures_count; i++)
+  {
+    snprintf(trace_msg, sizeof(trace_msg), "test case #%zu", i);
+
+    failed = clargs_parse(p, test_cases[i].argc, test_cases[i].argv, error);
+    CuAssertIntEquals_Msg(tc, trace_msg, test_cases[i].has_error, failed);
+
+    if (!failed)
+    {
+      CuAssertStrEquals_Msg(tc, trace_msg, test_cases[i].expected_name, arg_name);
+      CuAssertIntEquals_Msg(tc, trace_msg, test_cases[i].expected_score, arg_score);
+      CuAssertIntEquals_Msg(tc, trace_msg, test_cases[i].expected_flag, arg_flag);
+    }
+
+    // Properly reset the arguments
+    strcpy(arg_name, "");
+    arg_score = 0;
+    arg_flag = 0;
+
+    strcpy(error, "");
+  }
 }
 
 void test_clargs_add_argument(CuTest *tc)
