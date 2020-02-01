@@ -28,8 +28,18 @@ int32_t clargs_add_argument(
 ) {
   struct clargs_arg *arg = calloc(1, sizeof(struct clargs_arg));
 
+  if (!name || strlen(name) == 0)
+  {
+    free(arg);
+    return CLARGS_ERR_NAME_REQUIRED;
+  }
+
   strncpy(arg->name, name, sizeof(arg->name));
-  strncpy(arg->description, description, sizeof(arg->description));
+
+  if (description != NULL)
+  {
+    strncpy(arg->description, description, sizeof(arg->description));
+  }
 
   arg->type = type;
   arg->required = required;
@@ -161,14 +171,14 @@ char *clargs_parse_string(char *value, void *extra, int32_t *has_error, char *er
   return value;
 }
 
-int32_t clargs_parse(struct clargs_parser *p, int32_t argc, char **argv, char *cl_error)
+int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, char *cl_error)
 {
   int i;
   for (i = 0; i < argc; i++)
   {
     if (strstr(argv[i], "--") == argv[i])
     {
-      char *arg_name = argv[i] + 2;  // 2 is the length of the prefix "--"
+      const char *arg_name = argv[i] + 2;  // 2 is the length of the prefix "--"
       int32_t arg_found = 0;
       struct clargs_arg *arg = (struct clargs_arg *)hashtable_lookup(p->defs, arg_name, &arg_found);
       if (!arg_found)
@@ -176,61 +186,68 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, char **argv, char *c
         snprintf(cl_error, 100, "unknown argument: %s", arg_name);
         return 1;
       }
-      else
+
+      char error[CLARGS_ERROR_SIZE] = {0};
+      int32_t has_error = 0;
+
+      if (arg->type != CLARGS_TYPE_BOOL && (i == argc - 1 ||
+        strstr(argv[i + 1], "--") == argv[i + 1]))
       {
-        char error[64] = {0};
-        int32_t has_error = 0;
+        snprintf(cl_error, 100, "missing values for argument %s", arg_name);
+        return 1;
+      }
 
-        if (arg->type != CLARGS_TYPE_BOOL && (i == argc - 1 ||
-          strstr(argv[i + 1], "--") == argv[i + 1]))
+      char v[1024] = {0};
+      if (argv[i + 1])
+      {
+        strncpy(v, argv[i + 1], sizeof(v));
+      }
+
+      switch (arg->type)
+      {
+      case CLARGS_TYPE_INT:
+        *((int32_t *)arg->value_ptr) = clargs_parse_int(v, arg->extra, &has_error, error);
+        break;
+      case CLARGS_TYPE_LONG:
+        *((int64_t *)arg->value_ptr) = clargs_parse_long(v, arg->extra, &has_error, error);
+        break;
+      case CLARGS_TYPE_STRING:
         {
-          snprintf(cl_error, 100, "missing values for argument %s", arg_name);
-          return 1;
-        }
-
-        char *v = argv[i + 1];
-
-        switch (arg->type)
-        {
-        case CLARGS_TYPE_INT:
-          *((int32_t *)arg->value_ptr) = clargs_parse_int(v, arg->extra, &has_error, error);
-          break;
-        case CLARGS_TYPE_LONG:
-          *((int64_t *)arg->value_ptr) = clargs_parse_long(v, arg->extra, &has_error, error);
-          break;
-        case CLARGS_TYPE_STRING:
+          char *value = clargs_parse_string(v, arg->extra, &has_error, error);
+          if (!has_error)
           {
-            char *value = clargs_parse_string(v, arg->extra, &has_error, error);
-            if (!has_error)
-            {
-              strcpy((char *)arg->value_ptr, value);  // TODO Check for possible buffer overflow.
-            }
-            break;
+            strcpy((char *)arg->value_ptr, value);  // TODO Check for possible buffer overflow.
           }
-        case CLARGS_TYPE_BOOL:
-          {
-            char value[66] = {0};
-            if (!v || strstr(v, "--") == v)
-            {
-              strcpy(value, "");
-            }
-            else {
-              snprintf(value, sizeof(value), "%s", argv[i + 1]);
-            }
-
-            *((int32_t *)arg->value_ptr) = clargs_parse_long(value, arg->extra, &has_error, error);
-            break;
-          }
-        default:
-          snprintf(cl_error, 100, "unknown argument type: %d", arg->type);
-          return 1;
+          break;
         }
-
-        if (has_error)
+      case CLARGS_TYPE_BOOL:
         {
-          snprintf(cl_error, 100, "%s: %s", arg_name, error);
-          return 1;
+          /*
+           * Allocating 16 bytes for a value that's expected to be boolean is more than reasonable.
+           * Anything longer than 16 bytes will get truncated and is, for sure, junk.
+           */
+          char value[16] = {0};
+          if (strstr(v, "--") == v)
+          {
+            strcpy(value, "");
+          }
+          else
+          {
+            strncpy(value, argv[i + 1], sizeof(value));
+          }
+
+          *((int32_t *)arg->value_ptr) = clargs_parse_bool(value, arg->extra, &has_error, error);
+          break;
         }
+      default:
+        snprintf(cl_error, 100, "unknown argument type: %d", arg->type);
+        return 1;
+      }
+
+      if (has_error)
+      {
+        snprintf(cl_error, 100, "%s: %s", arg_name, error);
+        return 1;
       }
     }
   }
