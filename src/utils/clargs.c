@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>  // POSIX strcasecmp
+#include <errno.h>
 
 struct clargs_parser *clargs_create_parser()
 {
@@ -49,32 +50,24 @@ int32_t clargs_parse_int(const char *value, void *extra, int32_t *has_error, cha
     return 0;
   }
 
-  if (strlen(value) == 1 && (value[0] == '+' || value[0] == '-'))
+  char *end;
+  int32_t parsed_value = strtol(value, &end, 10);
+
+  if (errno == ERANGE)
+  {
+    *has_error = 1;
+    strcpy(error, "value is out of range");
+    return 0;
+  }
+
+  if (end != value + strlen(value))
   {
     *has_error = 1;
     strcpy(error, "failed to parse integer");
     return 0;
   }
 
-  if (value[0] != '+' && value[0] != '-' && !isdigit(value[0]))
-  {
-    *has_error = 1;
-    strcpy(error, "failed to parse integer");
-    return 0;
-  }
-
-  int32_t i;
-  for (i = 1; i < strlen(value); i++)
-  {
-    if (!isdigit(value[i]))
-    {
-      *has_error = 1;
-      strcpy(error, "failed to parse integer");
-      return 0;
-    }
-  }
-
-  return atoi(value);
+  return parsed_value;
 }
 
 int64_t clargs_parse_long(const char *value, void *extra, int32_t *has_error, char *error)
@@ -195,7 +188,7 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, char **argv, char *c
         if (arg->type != CLARGS_TYPE_BOOL && (i == argc - 1 ||
           strstr(argv[i + 1], "--") == argv[i + 1]))
         {
-          snprintf(cl_error, 100, "missing values for srgument %s", arg_name);
+          snprintf(cl_error, 100, "missing values for argument %s", arg_name);
           return 1;
         }
 
