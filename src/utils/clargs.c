@@ -151,7 +151,7 @@ char *clargs_parse_string(char *value, void *extra, int32_t *has_error, char *er
 {
   *has_error = 0;
 
-  if (strlen(value) > (int32_t)extra)
+  if (extra != NULL && strlen(value) > (int32_t)extra)
   {
     *has_error = 1;
     strcpy(error, "failed to parse string");
