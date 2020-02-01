@@ -22,24 +22,27 @@ void test_clargs_parse_int(CuTest *tc)
   struct __fixture_parse_int test_cases[] = {
     {"16", 0, 16},
     {"f", 1, 0},
-    {" 10 ", 0, 10},
+    {" 10 ", 1, 10},
     {"10.", 1, 0},
     {"John", 1, 0},
   };
 
   int32_t n = sizeof(test_cases) / sizeof(struct __fixture_parse_int);
+  char trace_msg[32] = {0};
 
   int32_t i;
   for (i = 0; i < n; i++)
   {
+    snprintf(trace_msg, sizeof(trace_msg), "test case #%d", i);
+
     int32_t has_error = 0;
     char error[64] = {0};
     int32_t actual = clargs_parse_int(test_cases[i].raw, NULL, &has_error, error);
 
-    CuAssertIntEquals(tc, test_cases[i].has_error, has_error);
+    CuAssertIntEquals_Msg(tc, trace_msg, test_cases[i].has_error, has_error);
     if (!test_cases[i].has_error)
     {
-      CuAssertIntEquals(tc, test_cases[i].expected, actual);
+      CuAssertIntEquals_Msg(tc, trace_msg, test_cases[i].expected, actual);
     }
   }
 }
