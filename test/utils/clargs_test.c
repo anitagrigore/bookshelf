@@ -12,7 +12,7 @@ void test_clargs_parse(CuTest *tc)
 
 struct __fixture_parse_int
 {
-  char raw[16];
+  char raw[24];
   int32_t has_error;
   int32_t expected;
 };
@@ -21,10 +21,13 @@ void test_clargs_parse_int(CuTest *tc)
 {
   struct __fixture_parse_int test_cases[] = {
     {"16", 0, 16},
+    {"-10", 0, -10},
+    {"+10", 0, 10},
     {"f", 1, 0},
     {" 10 ", 1, 10},
     {"10.", 1, 0},
     {"John", 1, 0},
+    {"9999999999999999999", 1, 0},  // out of range
   };
 
   int32_t n = sizeof(test_cases) / sizeof(struct __fixture_parse_int);
