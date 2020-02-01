@@ -125,9 +125,42 @@ void test_clargs_parse_long(CuTest *tc)
   }
 }
 
+struct __fixture_parse_string
+{
+  char raw[24];
+  size_t max_allowed_length;
+  int32_t has_error;
+  char expected[24];
+};
+
 void test_clargs_parse_string(CuTest *tc)
 {
+  struct __fixture_parse_string test_cases[] = {
+    {"", 0, 0, ""},
+    {"foo", 0, 0, "foo"},
+    {"foo", 16, 0, "foo"},
+    {"foobarbaz", 3, 1, ""},
+  };
 
+  size_t n = sizeof(test_cases) / sizeof(struct __fixture_parse_string);
+  char trace_msg[32] = {0};
+
+  int32_t i;
+  for (i = 0; i < n; i++)
+  {
+    snprintf(trace_msg, sizeof(trace_msg), "test case #%i", i);
+
+    int32_t has_error = 0;
+    char error[64] = {0};
+    char *actual = clargs_parse_string(test_cases[i].raw, (void *)test_cases[i].max_allowed_length,
+      &has_error, error);
+
+    CuAssertIntEquals_Msg(tc, trace_msg, test_cases[i].has_error, has_error);
+    if (!test_cases[i].has_error)
+    {
+      CuAssertStrEquals_Msg(tc, trace_msg, test_cases[i].expected, actual);
+    }
+  }
 }
 
 CuSuite *make_suite_clargs()
