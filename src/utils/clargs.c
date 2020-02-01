@@ -50,6 +50,8 @@ int32_t clargs_parse_int(const char *value, void *extra, int32_t *has_error, cha
     return 0;
   }
 
+  errno = 0;  // properly reset errno before attempting to parse the number
+
   char *end;
   int32_t parsed_value = strtol(value, &end, 10);
 
@@ -81,32 +83,26 @@ int64_t clargs_parse_long(const char *value, void *extra, int32_t *has_error, ch
     return 0;
   }
 
-  if (strlen(value) == 1 && (value[0] == '+' || value[0] == '-'))
+  errno = 0;  // properly reset errno before attempting to parse the number
+
+  char *end;
+  int64_t parsed_value = strtoll(value, &end, 10);
+
+  if (errno == ERANGE)
+  {
+    *has_error = 1;
+    strcpy(error, "value is out of range");
+    return 0;
+  }
+
+  if (end != value + strlen(value))
   {
     *has_error = 1;
     strcpy(error, "failed to parse long integer");
     return 0;
   }
 
-  if (value[0] != '+' && value[0] != '-' && !isdigit(value[0]))
-  {
-    *has_error = 1;
-    strcpy(error, "failed to parse long integer");
-    return 0;
-  }
-
-  int32_t i;
-  for (i = 1; i < strlen(value); i++)
-  {
-    if (!isdigit(value[i]))
-    {
-      *has_error = 1;
-      strcpy(error, "failed to parse long integer");
-      return 0;
-    }
-  }
-
-  return atoll(value);
+  return parsed_value;
 }
 
 int32_t clargs_parse_bool(const char *value, void *extra, int32_t *has_error, char *error)
