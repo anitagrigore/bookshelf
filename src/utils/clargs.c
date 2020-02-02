@@ -196,7 +196,7 @@ char *clargs_parse_string(char *value, void *extra, int32_t *has_error, char *er
   if (extra != NULL && strlen(value) > (int32_t)extra)
   {
     *has_error = 1;
-    strcpy(error, "failed to parse string");
+    snprintf(error, CLARGS_ERROR_SIZE, "string is longer than %d characters", (int32_t)extra);
     return NULL;
   }
 
