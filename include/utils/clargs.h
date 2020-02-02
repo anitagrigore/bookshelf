@@ -7,6 +7,7 @@
 #define CLARGS_ERROR_SIZE 64
 
 #define CLARGS_ERR_NAME_REQUIRED 0x10
+#define CLARGS_ERR_ALLOC 0x11
 
 typedef enum
 {
@@ -28,7 +29,13 @@ struct clargs_arg
 
 struct clargs_parser
 {
+  /// A hashtable (`const char *` -> `struct clargs_arg`) representing the definitions added to the
+  /// parser.
   struct hashtable *defs;
+
+  /// The arguments added to the parser (`struct clargs_arg *`) available to be iterated on. Only
+  /// for internal usage.
+  struct list *__arguments;
 };
 
 /**

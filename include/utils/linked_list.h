@@ -97,4 +97,8 @@ void list_free(struct list *list, free_handler_t free_fn);
  */
 void *list_delete(struct list *list, struct list_node *node);
 
+
+#define LIST_APPEND(list, data) list_insert((list), (data), (list)->tail)
+#define LIST_PREPEND(list, data) list_insert((list), (data), NULL)
+
 /** @} */

@@ -12,7 +12,18 @@ struct clargs_parser *clargs_create_parser()
 {
   struct clargs_parser *p = calloc(1, sizeof(struct clargs_parser));
 
-  p->defs = hashtable_create(32);
+  if ((p->defs = hashtable_create(32)) == NULL)
+  {
+    free(p);
+    return NULL;
+  }
+
+  if ((p->__arguments = list_create()) == NULL)
+  {
+    hashtable_free(p->defs, NULL);
+    free(p);
+    return NULL;
+  }
 
   return p;
 }
@@ -27,6 +38,10 @@ int32_t clargs_add_argument(
   void *value_ptr
 ) {
   struct clargs_arg *arg = calloc(1, sizeof(struct clargs_arg));
+  if (arg == NULL)
+  {
+    return CLARGS_ERR_ALLOC;
+  }
 
   if (!name || strlen(name) == 0)
   {
@@ -46,7 +61,24 @@ int32_t clargs_add_argument(
   arg->extra = extra;
   arg->value_ptr = value_ptr;
 
-  return hashtable_insert(p->defs, name, arg);
+  int32_t err;
+
+  err = hashtable_insert(p->defs, name, arg);
+  if (err != 0)
+  {
+    free(arg);
+    return err;
+  }
+
+  err = LIST_APPEND(p->__arguments, (void *)arg);
+  if (err != 0)
+  {
+    hashtable_delete(p->defs, name, NULL);
+    free(arg);
+    return err;
+  }
+
+  return err;
 }
 
 int32_t clargs_parse_int(const char *value, void *extra, int32_t *has_error, char *error)
@@ -173,6 +205,12 @@ char *clargs_parse_string(char *value, void *extra, int32_t *has_error, char *er
 
 int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, char *cl_error)
 {
+  struct hashtable *found_args = hashtable_create(32);
+  if (!found_args)
+  {
+    return CLARGS_ERR_ALLOC;
+  }
+
   size_t i;
   for (i = 0; i < argc; i++)
   {
@@ -184,6 +222,12 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
       if (!arg_found)
       {
         snprintf(cl_error, 100, "unknown argument: %s", arg_name);
+        return 1;
+      }
+
+      if (hashtable_insert(found_args, arg_name, NULL) != 0)
+      {
+        hashtable_free(found_args, NULL);
         return 1;
       }
 
@@ -250,6 +294,33 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
         return 1;
       }
     }
+  }
+
+  /*
+   * Check if all the required arguments have been passed.
+   */
+
+  struct list_node *curr = p->__arguments->head;
+  while (curr != NULL)
+  {
+    struct clargs_arg *data = (struct clargs_arg *)curr->data;
+
+    if (data->required)
+    {
+      int32_t found = 0;
+
+      hashtable_lookup(found_args, data->name, &found);
+
+      if (!found)
+      {
+        hashtable_free(found_args, NULL);
+
+        snprintf(cl_error, CLARGS_ERROR_SIZE, "required argument not found: %s", data->name);
+        return 1;
+      }
+    }
+
+    curr = curr->next;
   }
 
   return 0;
