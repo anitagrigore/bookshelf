@@ -23,3 +23,9 @@ add_executable(test
 
 target_link_libraries(test cutest utils)
 target_include_directories(test PRIVATE test third_party)
+
+add_executable(demo
+  demo/demo.c
+)
+
+target_link_libraries(demo utils)
