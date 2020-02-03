@@ -18,7 +18,7 @@ struct clargs_parser *clargs_create_parser()
     return NULL;
   }
 
-  if ((p->__arguments = list_create()) == NULL)
+  if ((p->_arguments = list_create()) == NULL)
   {
     hashtable_free(p->defs, NULL);
     free(p);
@@ -70,7 +70,7 @@ int32_t clargs_add_argument(
     return err;
   }
 
-  err = LIST_APPEND(p->__arguments, (void *)arg);
+  err = LIST_APPEND(p->_arguments, (void *)arg);
   if (err != 0)
   {
     hashtable_delete(p->defs, name, NULL);
@@ -221,7 +221,7 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
       struct clargs_arg *arg = (struct clargs_arg *)hashtable_lookup(p->defs, arg_name, &arg_found);
       if (!arg_found)
       {
-        snprintf(cl_error, 100, "unknown argument: %s", arg_name);
+        snprintf(cl_error, CLARGS_ERROR_SIZE, "unknown argument: %s", arg_name);
         return 1;
       }
 
@@ -237,7 +237,7 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
       if (arg->type != CLARGS_TYPE_BOOL && (i == argc - 1 ||
         strstr(argv[i + 1], "--") == argv[i + 1]))
       {
-        snprintf(cl_error, 100, "missing values for argument %s", arg_name);
+        snprintf(cl_error, CLARGS_ERROR_SIZE, "missing values for argument %s", arg_name);
         return 1;
       }
 
@@ -260,7 +260,23 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
           char *value = clargs_parse_string(v, arg->extra, &has_error, error);
           if (!has_error)
           {
-            strcpy((char *)arg->value_ptr, value);  // TODO Check for possible buffer overflow.
+            size_t max_length = (size_t)arg->extra;
+            if (max_length == 0)
+            {
+              /*
+               * The user chose not to define a maximum length (which should usually correspond to
+               * the allocated buffer size), so we are allowing anything here.
+               */
+              strcpy((char *)arg->value_ptr, value);
+            }
+            else
+            {
+              /*
+               * We trat the maximum length as the size of the allocated buffer here to prevent
+               * buffer overflow.
+               */
+              strncpy((char *)arg->value_ptr, value, max_length);
+            }
           }
           break;
         }
@@ -284,13 +300,13 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
           break;
         }
       default:
-        snprintf(cl_error, 100, "unknown argument type: %d", arg->type);
+        snprintf(cl_error, CLARGS_ERROR_SIZE, "unknown argument type: %d", arg->type);
         return 1;
       }
 
       if (has_error)
       {
-        snprintf(cl_error, 100, "%s: %s", arg_name, error);
+        snprintf(cl_error, CLARGS_ERROR_SIZE, "%s: %s", arg_name, error);
         return 1;
       }
     }
@@ -300,7 +316,7 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
    * Check if all the required arguments have been passed.
    */
 
-  struct list_node *curr = p->__arguments->head;
+  struct list_node *curr = p->_arguments->head;
   while (curr != NULL)
   {
     struct clargs_arg *data = (struct clargs_arg *)curr->data;
@@ -324,4 +340,9 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
   }
 
   return 0;
+}
+
+void clargs_free_parser(struct clargs_parser *p)
+{
+
 }

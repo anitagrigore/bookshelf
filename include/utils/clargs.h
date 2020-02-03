@@ -35,7 +35,7 @@ struct clargs_parser
 
   /// The arguments added to the parser (`struct clargs_arg *`) available to be iterated on. Only
   /// for internal usage.
-  struct list *__arguments;
+  struct list *_arguments;
 };
 
 /**
