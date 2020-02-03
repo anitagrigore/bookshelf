@@ -24,6 +24,8 @@ int main(int32_t argc, const char **argv)
   char cl_error[CLARGS_ERROR_SIZE] = {0};
   int32_t parse_result = clargs_parse(p, argc, argv, cl_error);
 
+  clargs_free_parser(p);
+
   if (parse_result != 0)
   {
     fprintf(stderr, "error: %s\n", cl_error);
