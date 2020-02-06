@@ -221,6 +221,7 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
       struct clargs_arg *arg = (struct clargs_arg *)hashtable_lookup(p->defs, arg_name, &arg_found);
       if (!arg_found)
       {
+        hashtable_free(found_args, NULL);
         snprintf(cl_error, CLARGS_ERROR_SIZE, "unknown argument: %s", arg_name);
         return 1;
       }
@@ -237,6 +238,7 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
       if (arg->type != CLARGS_TYPE_BOOL && (i == argc - 1 ||
         strstr(argv[i + 1], "--") == argv[i + 1]))
       {
+        hashtable_free(found_args, NULL);
         snprintf(cl_error, CLARGS_ERROR_SIZE, "missing values for argument %s", arg_name);
         return 1;
       }
@@ -300,12 +302,14 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
           break;
         }
       default:
+        hashtable_free(found_args, NULL);
         snprintf(cl_error, CLARGS_ERROR_SIZE, "unknown argument type: %d", arg->type);
         return 1;
       }
 
       if (has_error)
       {
+        hashtable_free(found_args, NULL);
         snprintf(cl_error, CLARGS_ERROR_SIZE, "%s: %s", arg_name, error);
         return 1;
       }
@@ -339,10 +343,19 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
     curr = curr->next;
   }
 
+  hashtable_free(found_args, NULL);
+
   return 0;
+}
+
+static void _free_argument(void *argument)
+{
+  free((struct clargs_arg *)argument);
 }
 
 void clargs_free_parser(struct clargs_parser *p)
 {
-
+  hashtable_free(p->defs, _free_argument);
+  list_free(p->_arguments, NULL);
+  free(p);
 }
