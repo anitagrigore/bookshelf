@@ -274,7 +274,7 @@ int32_t clargs_parse(struct clargs_parser *p, int32_t argc, const char **argv, c
             else
             {
               /*
-               * We trat the maximum length as the size of the allocated buffer here to prevent
+               * We treat the maximum length as the size of the allocated buffer here to prevent
                * buffer overflow.
                */
               strncpy((char *)arg->value_ptr, value, max_length);
